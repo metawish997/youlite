@@ -203,6 +203,14 @@ const CartComponent = () => {
 
       <TouchableOpacity
         style={styles.optionButton}
+        onPress={() => go("/pages/orderHistory/WishList")}
+      >
+        <Ionicons name="heart" size={20} color={Colors.PRIMARY} />
+        <Text style={styles.optionText}>Wishlist</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.optionButton}
         onPress={() => go("/pages/AddToCart/Coupons")}
       >
         <Ionicons name="pricetag-outline" size={20} color={Colors.PRIMARY} />
@@ -424,11 +432,6 @@ const CartComponent = () => {
             <Text style={styles.summaryValue}>
               ₹{subtotal.toLocaleString()}
             </Text>
-          </View>
-
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Delivery</Text>
-            <Text style={styles.summaryValue}>FREE</Text>
           </View>
 
           <View style={styles.totalRow}>

@@ -1,10 +1,14 @@
-import { getProductDetail, getProducts } from '@/lib/api/productApi';
-import { getCustomerById, getSession, updateCustomerById } from '@/lib/services/authService';
-import Colors from '@/utils/Colors';
-import { Ionicons } from '@expo/vector-icons';
-import { Image } from 'expo-image';
-import { router, useLocalSearchParams } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { getProductDetail, getProducts } from "@/lib/api/productApi";
+import {
+  getCustomerById,
+  getSession,
+  updateCustomerById,
+} from "@/lib/services/authService";
+import Colors from "@/utils/Colors";
+import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
+import { router, useLocalSearchParams } from "expo-router";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
@@ -17,10 +21,10 @@ import {
   Text,
   TouchableOpacity,
   View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 const side = 16;
 const gap = 16;
 const itemWidth = (width - side * 2 - gap) / 2;
@@ -49,7 +53,7 @@ type WCVariation = {
 type WCProduct = {
   id: number | string;
   name: string;
-  type?: 'simple' | 'variable' | string;
+  type?: "simple" | "variable" | string;
   price: string | number;
   regular_price?: string | number;
   sale_price?: string | number;
@@ -64,7 +68,7 @@ type WCProduct = {
   variations?: (number | string)[];
   featured?: boolean;
   on_sale?: boolean;
-  stock_status?: 'instock' | 'outofstock' | 'onbackorder';
+  stock_status?: "instock" | "outofstock" | "onbackorder";
   // Enhanced fields for variations
   variationPrices?: { [key: string]: number };
   variationOriginalPrices?: { [key: string]: number };
@@ -98,10 +102,10 @@ const defaultFilters: Filters = {
 };
 
 // Helpers
-const stripHTML = (s: string): string => s.replace(/<[^>]*>/g, '');
-const toStr = (v: any) => String(v ?? '');
+const stripHTML = (s: string): string => s.replace(/<[^>]*>/g, "");
+const toStr = (v: any) => String(v ?? "");
 const toNum = (v: any, fb = 0): number => {
-  const n = parseFloat(String(v ?? ''));
+  const n = parseFloat(String(v ?? ""));
   return Number.isFinite(n) ? n : fb;
 };
 const pctOff = (reg: number, sale: number): string | undefined => {
@@ -112,26 +116,28 @@ const pctOff = (reg: number, sale: number): string | undefined => {
   return undefined;
 };
 const normalizeUri = (uri: string): string => {
-  const s = (uri || '').trim();
-  if (!s) return '';
-  return s.startsWith('http://') ? s.replace('http://', 'https://') : s;
+  const s = (uri || "").trim();
+  if (!s) return "";
+  return s.startsWith("http://") ? s.replace("http://", "https://") : s;
 };
 const firstImageSrc = (images?: WCImage[]): string => {
-  const fallback = 'https://placehold.co/400x400/E5E7EB/6B7280?text=No+Image';
+  const fallback = "https://placehold.co/400x400/E5E7EB/6B7280?text=No+Image";
   const first: string | undefined = images?.[0]?.src;
   const src: string = first ? normalizeUri(first) : fallback;
   return src;
 };
 
-const parsePriceRangeFromHtml = (priceHtml?: string): { min?: number; max?: number } => {
-  if (!priceHtml || typeof priceHtml !== 'string') return {};
+const parsePriceRangeFromHtml = (
+  priceHtml?: string
+): { min?: number; max?: number } => {
+  if (!priceHtml || typeof priceHtml !== "string") return {};
 
   try {
     const priceMatches = priceHtml.match(/&#8377;([\d,]+\.?\d*)/g) || [];
     const prices: number[] = [];
 
-    priceMatches.forEach(match => {
-      const priceStr = match.replace('&#8377;', '').replace(/,/g, '');
+    priceMatches.forEach((match) => {
+      const priceStr = match.replace("&#8377;", "").replace(/,/g, "");
       const price = parseFloat(priceStr);
       if (!isNaN(price)) {
         prices.push(price);
@@ -146,7 +152,7 @@ const parsePriceRangeFromHtml = (priceHtml?: string): { min?: number; max?: numb
 
     return {};
   } catch (error) {
-    console.error('Error parsing price range:', error);
+    console.error("Error parsing price range:", error);
     return {};
   }
 };
@@ -160,7 +166,10 @@ const pctDiscount = (regular: number, sale: number): number | undefined => {
 };
 
 // Function to get variation details (async, for variable products)
-const getVariationDetails = async (productId: string, variationIds: number[]): Promise<{
+const getVariationDetails = async (
+  productId: string,
+  variationIds: number[]
+): Promise<{
   variationPrices: { [key: string]: number };
   variationOriginalPrices: { [key: string]: number };
   variationDiscounts: { [key: string]: number };
@@ -177,8 +186,14 @@ const getVariationDetails = async (productId: string, variationIds: number[]): P
       const variationData = variationRes?.data as WCVariation;
 
       if (variationData) {
-        const salePrice = toNum(variationData.sale_price || variationData.price, 0);
-        const regularPrice = toNum(variationData.regular_price || variationData.price, 0);
+        const salePrice = toNum(
+          variationData.sale_price || variationData.price,
+          0
+        );
+        const regularPrice = toNum(
+          variationData.regular_price || variationData.price,
+          0
+        );
         const discount = pctDiscount(regularPrice, salePrice);
 
         const attributes = variationData.attributes || [];
@@ -194,15 +209,20 @@ const getVariationDetails = async (productId: string, variationIds: number[]): P
       }
     }
   } catch (error) {
-    console.error('Error fetching variation details:', error);
+    console.error("Error fetching variation details:", error);
   }
 
-  return { variationPrices, variationOriginalPrices, variationDiscounts, variationIds: variationIdMap };
+  return {
+    variationPrices,
+    variationOriginalPrices,
+    variationDiscounts,
+    variationIds: variationIdMap,
+  };
 };
 
 // Process product for variations (async)
 const processProductVariations = async (p: WCProduct): Promise<WCProduct> => {
-  const isVariable = p?.type === 'variable';
+  const isVariable = p?.type === "variable";
   let sale = toNum(p?.sale_price ?? p?.price, 0);
   let regular = toNum(p?.regular_price ?? p?.price, 0);
   let discount: string | undefined;
@@ -216,8 +236,15 @@ const processProductVariations = async (p: WCProduct): Promise<WCProduct> => {
     }
 
     // Fetch variations if available
-    if (p.variations && Array.isArray(p.variations) && p.variations.length > 0) {
-      const variationDetails = await getVariationDetails(String(p.id), p.variations as number[]);
+    if (
+      p.variations &&
+      Array.isArray(p.variations) &&
+      p.variations.length > 0
+    ) {
+      const variationDetails = await getVariationDetails(
+        String(p.id),
+        p.variations as number[]
+      );
       p.variationPrices = variationDetails.variationPrices;
       p.variationOriginalPrices = variationDetails.variationOriginalPrices;
       p.variationDiscounts = variationDetails.variationDiscounts;
@@ -233,7 +260,8 @@ const processProductVariations = async (p: WCProduct): Promise<WCProduct> => {
         p.effectiveId = String(variationDetails.variationIds[firstOption]);
         // Calculate discount from first variation
         const firstSale = variationDetails.variationPrices[firstOption];
-        const firstRegular = variationDetails.variationOriginalPrices[firstOption];
+        const firstRegular =
+          variationDetails.variationOriginalPrices[firstOption];
         const pct = pctDiscount(firstRegular, firstSale);
         if (pct) {
           discount = `${pct}% OFF`;
@@ -260,7 +288,10 @@ const processProductVariations = async (p: WCProduct): Promise<WCProduct> => {
 
 const SearchResults: React.FC = () => {
   const params = useLocalSearchParams<{ query?: string }>();
-  const query = useMemo(() => (typeof params.query === 'string' ? params.query.trim() : ''), [params.query]);
+  const query = useMemo(
+    () => (typeof params.query === "string" ? params.query.trim() : ""),
+    [params.query]
+  );
 
   const [products, setProducts] = useState<WCProduct[]>([]);
   const [baseProducts, setBaseProducts] = useState<WCProduct[]>([]);
@@ -271,14 +302,18 @@ const SearchResults: React.FC = () => {
   const [userId, setUserId] = useState<number | null>(null);
   const [wishlistIds, setWishlistIds] = useState<string[]>([]);
   const [cartIds, setCartIds] = useState<string[]>([]);
-  const [toast, setToast] = useState<string>('');
+  const [toast, setToast] = useState<string>("");
 
   // Per-item loader states
-  const [loadingWishlist, setLoadingWishlist] = useState<Record<string, boolean>>({});
+  const [loadingWishlist, setLoadingWishlist] = useState<
+    Record<string, boolean>
+  >({});
   const [loadingCart, setLoadingCart] = useState<Record<string, boolean>>({});
 
   // UI state
-  const [sort, setSort] = useState<'relevant' | 'low' | 'high' | 'rating'>('relevant');
+  const [sort, setSort] = useState<"relevant" | "low" | "high" | "rating">(
+    "relevant"
+  );
   const [filterOpen, setFilterOpen] = useState<boolean>(false);
   const [filters, setFilters] = useState<Filters>(defaultFilters);
 
@@ -286,11 +321,13 @@ const SearchResults: React.FC = () => {
   const [allCategories, setAllCategories] = useState<WCCategory[]>([]);
   const [allTags, setAllTags] = useState<WCTag[]>([]);
   const [allBrands, setAllBrands] = useState<string[]>([]);
-  const [allAttributes, setAllAttributes] = useState<Record<string, string[]>>({});
+  const [allAttributes, setAllAttributes] = useState<Record<string, string[]>>(
+    {}
+  );
 
   const showToast = (msg: string) => {
     setToast(msg);
-    setTimeout(() => setToast(''), 1000);
+    setTimeout(() => setToast(""), 1000);
   };
 
   // Load user/meta. IMPORTANT: use the same cart key & shape as AllProductsScreen ('cart': array of {id, quantity})
@@ -300,10 +337,15 @@ const SearchResults: React.FC = () => {
       if (session?.user?.id) {
         setUserId(session.user.id);
         const customer = await getCustomerById(session.user.id);
-        const wl = customer?.meta_data?.find((m: any) => m.key === 'wishlist')?.value || [];
-        const cartArr: any[] = customer?.meta_data?.find((m: any) => m.key === 'cart')?.value || [];
+        const wl =
+          customer?.meta_data?.find((m: any) => m.key === "wishlist")?.value ||
+          [];
+        const cartArr: any[] =
+          customer?.meta_data?.find((m: any) => m.key === "cart")?.value || [];
         setWishlistIds(Array.isArray(wl) ? wl.map(toStr) : []);
-        setCartIds(Array.isArray(cartArr) ? cartArr.map((c: any) => String(c.id)) : []);
+        setCartIds(
+          Array.isArray(cartArr) ? cartArr.map((c: any) => String(c.id)) : []
+        );
       } else {
         setUserId(null);
         setWishlistIds([]);
@@ -326,26 +368,42 @@ const SearchResults: React.FC = () => {
       const base = !q
         ? list
         : list.filter((p) => {
-          const name = stripHTML(String(p.name || '')).toLowerCase();
-          const inName = name.includes(q);
-          const inTags = (p.tags || []).some((t) => String(t.name || '').toLowerCase().includes(q));
-          const inCats = (p.categories || []).some((c) => String(c.name || '').toLowerCase().includes(q));
-          return inName || inTags || inCats;
-        });
+            const name = stripHTML(String(p.name || "")).toLowerCase();
+            const inName = name.includes(q);
+            const inTags = (p.tags || []).some((t) =>
+              String(t.name || "")
+                .toLowerCase()
+                .includes(q)
+            );
+            const inCats = (p.categories || []).some((c) =>
+              String(c.name || "")
+                .toLowerCase()
+                .includes(q)
+            );
+            return inName || inTags || inCats;
+          });
 
       // Async process for variations
-      const processedPromises = base.map(async (p) => await processProductVariations(p));
+      const processedPromises = base.map(
+        async (p) => await processProductVariations(p)
+      );
       const processedBase = await Promise.all(processedPromises);
 
       // derive meta
       const categoryMap = new Map<number, WCCategory>();
-      processedBase.forEach((p) => (p.categories || []).forEach((c) => categoryMap.set(c.id, c)));
+      processedBase.forEach((p) =>
+        (p.categories || []).forEach((c) => categoryMap.set(c.id, c))
+      );
       const tagMap = new Map<number, WCTag>();
-      processedBase.forEach((p) => (p.tags || []).forEach((t) => tagMap.set(t.id, t)));
+      processedBase.forEach((p) =>
+        (p.tags || []).forEach((t) => tagMap.set(t.id, t))
+      );
 
       const brandsSet = new Set<string>();
       processedBase.forEach((p) => {
-        const root = (p.categories || []).find((c) => !c.parent || c.parent === 0);
+        const root = (p.categories || []).find(
+          (c) => !c.parent || c.parent === 0
+        );
         if (root?.name) brandsSet.add(root.name);
       });
 
@@ -363,12 +421,18 @@ const SearchResults: React.FC = () => {
 
       setBaseProducts(processedBase);
       setProducts(processedBase);
-      setAllCategories(Array.from(categoryMap.values()).sort((a, b) => a.name.localeCompare(b.name)));
-      setAllTags(Array.from(tagMap.values()).sort((a, b) => a.name.localeCompare(b.name)));
+      setAllCategories(
+        Array.from(categoryMap.values()).sort((a, b) =>
+          a.name.localeCompare(b.name)
+        )
+      );
+      setAllTags(
+        Array.from(tagMap.values()).sort((a, b) => a.name.localeCompare(b.name))
+      );
       setAllBrands(Array.from(brandsSet.values()).sort());
       setAllAttributes(attrObj);
     } catch {
-      setError('Failed to load search results. Please try again.');
+      setError("Failed to load search results. Please try again.");
       setBaseProducts([]);
       setProducts([]);
     } finally {
@@ -403,18 +467,24 @@ const SearchResults: React.FC = () => {
     }
 
     if (filters.minRating !== null) {
-      arr = arr.filter((p) => toNum(p.average_rating, 0) >= (filters.minRating as number));
+      arr = arr.filter(
+        (p) => toNum(p.average_rating, 0) >= (filters.minRating as number)
+      );
     }
 
     if (filters.brands.length) {
       const brands = new Set(filters.brands.map((b) => b.toLowerCase()));
       arr = arr.filter((p) => {
-        const root = (p.categories || []).find((c) => !c.parent || c.parent === 0);
+        const root = (p.categories || []).find(
+          (c) => !c.parent || c.parent === 0
+        );
         return root?.name ? brands.has(root.name.toLowerCase()) : false;
       });
     }
 
-    const attrKeys = Object.keys(filters.attributes).filter((k) => (filters.attributes[k] || []).length);
+    const attrKeys = Object.keys(filters.attributes).filter(
+      (k) => (filters.attributes[k] || []).length
+    );
     if (attrKeys.length) {
       arr = arr.filter((p) => {
         const pAttrs = p.attributes || [];
@@ -422,13 +492,15 @@ const SearchResults: React.FC = () => {
           const selectedOptions = new Set(filters.attributes[k]);
           const match = pAttrs.find((a) => a.name === k || a.slug === k);
           if (!match) return false;
-          return (match.options || []).some((opt) => selectedOptions.has(String(opt)));
+          return (match.options || []).some((opt) =>
+            selectedOptions.has(String(opt))
+          );
         });
       });
     }
 
     if (filters.inStockOnly) {
-      arr = arr.filter((p) => (p.stock_status || 'instock') === 'instock');
+      arr = arr.filter((p) => (p.stock_status || "instock") === "instock");
     }
     if (filters.onSaleOnly) {
       arr = arr.filter((p) => {
@@ -438,9 +510,18 @@ const SearchResults: React.FC = () => {
       });
     }
 
-    if (sort === 'low') arr.sort((a, b) => toNum(a.sale_price ?? a.price) - toNum(b.sale_price ?? b.price));
-    else if (sort === 'high') arr.sort((a, b) => toNum(b.sale_price ?? b.price) - toNum(a.sale_price ?? a.price));
-    else if (sort === 'rating') arr.sort((a, b) => toNum(b.average_rating) - toNum(a.average_rating));
+    if (sort === "low")
+      arr.sort(
+        (a, b) =>
+          toNum(a.sale_price ?? a.price) - toNum(b.sale_price ?? b.price)
+      );
+    else if (sort === "high")
+      arr.sort(
+        (a, b) =>
+          toNum(b.sale_price ?? b.price) - toNum(a.sale_price ?? a.price)
+      );
+    else if (sort === "rating")
+      arr.sort((a, b) => toNum(b.average_rating) - toNum(a.average_rating));
 
     setProducts(arr);
   }, [filters, sort, baseProducts]);
@@ -448,25 +529,29 @@ const SearchResults: React.FC = () => {
   // Actions
   const goToDetails = (p: WCProduct) => {
     router.push({
-      pathname: '/pages/DetailsOfItem/ItemDetails',
-      params: { id: String(p.id), title: stripHTML(String(p.name || '')) },
+      pathname: "/pages/DetailsOfItem/ItemDetails",
+      params: { id: String(p.id), title: stripHTML(String(p.name || "")) },
     });
   };
 
   const toggleWishlist = async (id: string) => {
-    if (!userId) return router.push('/Login/LoginRegisterPage');
+    if (!userId) return router.push("/Login/LoginRegisterPage");
     setLoadingWishlist((prev) => ({ ...prev, [id]: true }));
     try {
       const customer = await getCustomerById(userId);
-      let wl: string[] = customer?.meta_data?.find((m: any) => m.key === 'wishlist')?.value || [];
+      let wl: string[] =
+        customer?.meta_data?.find((m: any) => m.key === "wishlist")?.value ||
+        [];
       wl = Array.isArray(wl) ? wl.map(toStr) : [];
       const exists = wl.includes(id);
       const updated = exists ? wl.filter((x) => x !== id) : [...wl, id];
-      await updateCustomerById(userId, { meta_data: [{ key: 'wishlist', value: updated }] });
+      await updateCustomerById(userId, {
+        meta_data: [{ key: "wishlist", value: updated }],
+      });
       setWishlistIds(updated);
-      showToast(exists ? 'Removed from wishlist' : 'Added to wishlist');
+      showToast(exists ? "Removed from wishlist" : "Added to wishlist");
     } catch {
-      showToast('Failed to update wishlist');
+      showToast("Failed to update wishlist");
     } finally {
       setLoadingWishlist((prev) => ({ ...prev, [id]: false }));
     }
@@ -474,26 +559,29 @@ const SearchResults: React.FC = () => {
 
   // FIX: Write to 'cart' as array of objects { id, quantity } — same as AllProductsScreen
   const addToCart = async (effectiveId: string) => {
-    if (!userId) return router.push('/Login/LoginRegisterPage');
+    if (!userId) return router.push("/Login/LoginRegisterPage");
 
     setLoadingCart((prev) => ({ ...prev, [effectiveId]: true }));
 
     try {
       const customer = await getCustomerById(userId);
-      let cart: any[] = customer?.meta_data?.find((m: any) => m.key === 'cart')?.value || [];
+      let cart: any[] =
+        customer?.meta_data?.find((m: any) => m.key === "cart")?.value || [];
       if (!Array.isArray(cart)) cart = [];
 
       const exists = cart.some((c: any) => String(c.id) === effectiveId);
       if (!exists) {
         cart.push({ id: effectiveId, quantity: 1 });
-        await updateCustomerById(userId, { meta_data: [{ key: 'cart', value: cart }] });
+        await updateCustomerById(userId, {
+          meta_data: [{ key: "cart", value: cart }],
+        });
         setCartIds(cart.map((c: any) => String(c.id)));
-        showToast('Item added to cart');
+        showToast("Item added to cart");
       } else {
-        showToast('Already in cart');
+        showToast("Already in cart");
       }
     } catch {
-      showToast('Failed to add to cart');
+      showToast("Failed to add to cart");
     } finally {
       setLoadingCart((prev) => ({ ...prev, [effectiveId]: false }));
     }
@@ -504,23 +592,41 @@ const SearchResults: React.FC = () => {
     return (
       <View style={styles.metaBar}>
         <Text style={styles.metaText}>
-          {total} result{total === 1 ? '' : 's'} for “{query}”
+          {total} result{total === 1 ? "" : "s"} for “{query}”
         </Text>
         <View style={styles.metaActions}>
           <TouchableOpacity
             onPress={() =>
-              setSort((s) => (s === 'relevant' ? 'low' : s === 'low' ? 'high' : s === 'high' ? 'rating' : 'relevant'))
+              setSort((s) =>
+                s === "relevant"
+                  ? "low"
+                  : s === "low"
+                  ? "high"
+                  : s === "high"
+                  ? "rating"
+                  : "relevant"
+              )
             }
             style={styles.pill}
             activeOpacity={0.85}
           >
             <Ionicons name="swap-vertical" size={14} color={Colors.PRIMARY} />
             <Text style={styles.pillText}>
-              {sort === 'relevant' ? 'Relevant' : sort === 'low' ? 'Price ↑' : sort === 'high' ? 'Price ↓' : 'Top Rated'}
+              {sort === "relevant"
+                ? "Relevant"
+                : sort === "low"
+                ? "Price ↑"
+                : sort === "high"
+                ? "Price ↓"
+                : "Top Rated"}
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => setFilterOpen(true)} style={[styles.pill, styles.pillGhost]} activeOpacity={0.85}>
+          <TouchableOpacity
+            onPress={() => setFilterOpen(true)}
+            style={[styles.pill, styles.pillGhost]}
+            activeOpacity={0.85}
+          >
             <Ionicons name="filter" size={14} color={Colors.PRIMARY} />
             <Text style={styles.pillText}>Filters</Text>
           </TouchableOpacity>
@@ -539,21 +645,34 @@ const SearchResults: React.FC = () => {
     const toggleCategory = (id: number) => {
       setLocal((p) => {
         const exists = p.categoryIds.includes(id);
-        return { ...p, categoryIds: exists ? p.categoryIds.filter((x) => x !== id) : [...p.categoryIds, id] };
+        return {
+          ...p,
+          categoryIds: exists
+            ? p.categoryIds.filter((x) => x !== id)
+            : [...p.categoryIds, id],
+        };
       });
     };
 
     const toggleTag = (id: number) => {
       setLocal((p) => {
         const exists = p.tagIds.includes(id);
-        return { ...p, tagIds: exists ? p.tagIds.filter((x) => x !== id) : [...p.tagIds, id] };
+        return {
+          ...p,
+          tagIds: exists ? p.tagIds.filter((x) => x !== id) : [...p.tagIds, id],
+        };
       });
     };
 
     const toggleBrand = (name: string) => {
       setLocal((p) => {
         const exists = p.brands.includes(name);
-        return { ...p, brands: exists ? p.brands.filter((x) => x !== name) : [...p.brands, name] };
+        return {
+          ...p,
+          brands: exists
+            ? p.brands.filter((x) => x !== name)
+            : [...p.brands, name],
+        };
       });
     };
 
@@ -583,7 +702,10 @@ const SearchResults: React.FC = () => {
               </TouchableOpacity>
             </View>
 
-            <ScrollView contentContainerStyle={{ paddingBottom: 20 }} showsVerticalScrollIndicator={false}>
+            <ScrollView
+              contentContainerStyle={{ paddingBottom: 20 }}
+              showsVerticalScrollIndicator={false}
+            >
               {/* Highlights */}
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Highlights</Text>
@@ -591,27 +713,33 @@ const SearchResults: React.FC = () => {
                   <Text style={styles.switchLabel}>Featured only</Text>
                   <Switch
                     value={!!local.featured}
-                    onValueChange={(v) => setLocal((p) => ({ ...p, featured: v ? true : null }))}
-                    thumbColor={local.featured ? Colors.PRIMARY : '#fff'}
-                    trackColor={{ true: '#E0E7FF', false: '#E5E7EB' }}
+                    onValueChange={(v) =>
+                      setLocal((p) => ({ ...p, featured: v ? true : null }))
+                    }
+                    thumbColor={local.featured ? Colors.PRIMARY : "#fff"}
+                    trackColor={{ true: "#E0E7FF", false: "#E5E7EB" }}
                   />
                 </View>
                 <View style={styles.rowBetween}>
                   <Text style={styles.switchLabel}>In stock only</Text>
                   <Switch
                     value={local.inStockOnly}
-                    onValueChange={(v) => setLocal((p) => ({ ...p, inStockOnly: v }))}
-                    thumbColor={local.inStockOnly ? Colors.PRIMARY : '#fff'}
-                    trackColor={{ true: '#E0E7FF', false: '#E5E7EB' }}
+                    onValueChange={(v) =>
+                      setLocal((p) => ({ ...p, inStockOnly: v }))
+                    }
+                    thumbColor={local.inStockOnly ? Colors.PRIMARY : "#fff"}
+                    trackColor={{ true: "#E0E7FF", false: "#E5E7EB" }}
                   />
                 </View>
                 <View style={styles.rowBetween}>
                   <Text style={styles.switchLabel}>On sale only</Text>
                   <Switch
                     value={local.onSaleOnly}
-                    onValueChange={(v) => setLocal((p) => ({ ...p, onSaleOnly: v }))}
-                    thumbColor={local.onSaleOnly ? Colors.PRIMARY : '#fff'}
-                    trackColor={{ true: '#E0E7FF', false: '#E5E7EB' }}
+                    onValueChange={(v) =>
+                      setLocal((p) => ({ ...p, onSaleOnly: v }))
+                    }
+                    thumbColor={local.onSaleOnly ? Colors.PRIMARY : "#fff"}
+                    trackColor={{ true: "#E0E7FF", false: "#E5E7EB" }}
                   />
                 </View>
 
@@ -623,12 +751,29 @@ const SearchResults: React.FC = () => {
                       return (
                         <TouchableOpacity
                           key={r}
-                          onPress={() => setLocal((p) => ({ ...p, minRating: r === 0 ? null : r }))}
-                          style={[styles.ratingPill, active && styles.ratingPillActive]}
+                          onPress={() =>
+                            setLocal((p) => ({
+                              ...p,
+                              minRating: r === 0 ? null : r,
+                            }))
+                          }
+                          style={[
+                            styles.ratingPill,
+                            active && styles.ratingPillActive,
+                          ]}
                         >
-                          <Ionicons name="star" size={12} color={active ? Colors.WHITE : '#F59E0B'} />
-                          <Text style={[styles.ratingPillText, active && { color: Colors.WHITE }]}>
-                            {r === 0 ? 'Any' : `${r}+`}
+                          <Ionicons
+                            name="star"
+                            size={12}
+                            color={active ? Colors.WHITE : "#F59E0B"}
+                          />
+                          <Text
+                            style={[
+                              styles.ratingPillText,
+                              active && { color: Colors.WHITE },
+                            ]}
+                          >
+                            {r === 0 ? "Any" : `${r}+`}
                           </Text>
                         </TouchableOpacity>
                       );
@@ -650,7 +795,14 @@ const SearchResults: React.FC = () => {
                           onPress={() => toggleCategory(c.id)}
                           style={[styles.chip, active && styles.chipActive]}
                         >
-                          <Text style={[styles.chipText, active && styles.chipTextActive]}>{c.name}</Text>
+                          <Text
+                            style={[
+                              styles.chipText,
+                              active && styles.chipTextActive,
+                            ]}
+                          >
+                            {c.name}
+                          </Text>
                         </TouchableOpacity>
                       );
                     })}
@@ -671,7 +823,14 @@ const SearchResults: React.FC = () => {
                           onPress={() => toggleTag(t.id)}
                           style={[styles.chip, active && styles.chipActive]}
                         >
-                          <Text style={[styles.chipText, active && styles.chipTextActive]}>{t.name}</Text>
+                          <Text
+                            style={[
+                              styles.chipText,
+                              active && styles.chipTextActive,
+                            ]}
+                          >
+                            {t.name}
+                          </Text>
                         </TouchableOpacity>
                       );
                     })}
@@ -692,7 +851,14 @@ const SearchResults: React.FC = () => {
                           onPress={() => toggleBrand(b)}
                           style={[styles.chip, active && styles.chipActive]}
                         >
-                          <Text style={[styles.chipText, active && styles.chipTextActive]}>{b}</Text>
+                          <Text
+                            style={[
+                              styles.chipText,
+                              active && styles.chipTextActive,
+                            ]}
+                          >
+                            {b}
+                          </Text>
                         </TouchableOpacity>
                       );
                     })}
@@ -716,9 +882,19 @@ const SearchResults: React.FC = () => {
                               <TouchableOpacity
                                 key={`${key}_${opt}`}
                                 onPress={() => toggleAttr(key, opt)}
-                                style={[styles.chip, active && styles.chipActive]}
+                                style={[
+                                  styles.chip,
+                                  active && styles.chipActive,
+                                ]}
                               >
-                                <Text style={[styles.chipText, active && styles.chipTextActive]}>{opt}</Text>
+                                <Text
+                                  style={[
+                                    styles.chipText,
+                                    active && styles.chipTextActive,
+                                  ]}
+                                >
+                                  {opt}
+                                </Text>
                               </TouchableOpacity>
                             );
                           })}
@@ -732,11 +908,23 @@ const SearchResults: React.FC = () => {
 
             {/* Footer */}
             <View style={styles.modalFooter}>
-              <TouchableOpacity onPress={clearAll} style={[styles.footerBtn, styles.footerGhost]} activeOpacity={0.9}>
-                <Text style={[styles.footerBtnText, { color: Colors.PRIMARY }]}>Clear All</Text>
+              <TouchableOpacity
+                onPress={clearAll}
+                style={[styles.footerBtn, styles.footerGhost]}
+                activeOpacity={0.9}
+              >
+                <Text style={[styles.footerBtnText, { color: Colors.PRIMARY }]}>
+                  Clear All
+                </Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={apply} style={[styles.footerBtn, styles.footerSolid]} activeOpacity={0.9}>
-                <Text style={[styles.footerBtnText, { color: Colors.WHITE }]}>Apply Filters</Text>
+              <TouchableOpacity
+                onPress={apply}
+                style={[styles.footerBtn, styles.footerSolid]}
+                activeOpacity={0.9}
+              >
+                <Text style={[styles.footerBtnText, { color: Colors.WHITE }]}>
+                  Apply Filters
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -749,7 +937,7 @@ const SearchResults: React.FC = () => {
     const idStr = String(item.id);
     const effectiveId = item.effectiveId || idStr;
     const img = firstImageSrc(item.images);
-    const title = stripHTML(String(item.name || ''));
+    const title = stripHTML(String(item.name || ""));
     const reg = toNum(item.regular_price ?? item.price);
     const sale = toNum(item.sale_price ?? item.price);
     const off = item.discount || pctOff(reg, sale);
@@ -764,11 +952,19 @@ const SearchResults: React.FC = () => {
     return (
       <View style={styles.card}>
         <View style={styles.imageWrap}>
-          <TouchableOpacity style={styles.wishlistBtn} onPress={() => toggleWishlist(idStr)} disabled={wlLoading}>
+          <TouchableOpacity
+            style={styles.wishlistBtn}
+            onPress={() => toggleWishlist(idStr)}
+            disabled={wlLoading}
+          >
             {wlLoading ? (
               <ActivityIndicator size="small" color={Colors.PRIMARY} />
             ) : (
-              <Ionicons name={inWishlist ? 'heart' : 'heart-outline'} size={18} color={inWishlist ? Colors.PRIMARY : '#111'} />
+              <Ionicons
+                name={inWishlist ? "heart" : "heart-outline"}
+                size={18}
+                color={inWishlist ? Colors.PRIMARY : "#111"}
+              />
             )}
           </TouchableOpacity>
 
@@ -778,12 +974,23 @@ const SearchResults: React.FC = () => {
             </View>
           )}
 
-          <TouchableOpacity activeOpacity={0.9} onPress={() => goToDetails(item)}>
-            <Image source={{ uri: img }} style={styles.productImage} contentFit="contain" transition={200} />
+          <TouchableOpacity
+            activeOpacity={0.9}
+            onPress={() => goToDetails(item)}
+          >
+            <Image
+              source={{ uri: img }}
+              style={styles.productImage}
+              contentFit="contain"
+              transition={200}
+            />
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity activeOpacity={0.85} onPress={() => goToDetails(item)}>
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={() => goToDetails(item)}
+        >
           <View style={styles.info}>
             <Text numberOfLines={2} style={styles.title}>
               {title}
@@ -792,12 +999,16 @@ const SearchResults: React.FC = () => {
             <View style={styles.ratingRow}>
               <Ionicons name="star" size={12} color="#FFD43B" />
               <Text style={styles.ratingText}>{rating.toFixed(1)}</Text>
-              {ratingCount > 0 && <Text style={styles.ratingCount}>({ratingCount})</Text>}
+              {ratingCount > 0 && (
+                <Text style={styles.ratingCount}>({ratingCount})</Text>
+              )}
             </View>
 
             <View style={styles.priceRow}>
               <Text style={styles.priceNow}>₹{sale.toFixed(0)}</Text>
-              {reg > sale && <Text style={styles.priceOld}>₹{reg.toFixed(0)}</Text>}
+              {reg > sale && (
+                <Text style={styles.priceOld}>₹{reg.toFixed(0)}</Text>
+              )}
             </View>
 
             {!!item.tags?.length && (
@@ -822,8 +1033,14 @@ const SearchResults: React.FC = () => {
             <ActivityIndicator size="small" color={Colors.WHITE} />
           ) : (
             <>
-              <Ionicons name={inCart ? 'checkmark' : 'cart-outline'} size={16} color={Colors.WHITE} />
-              <Text style={styles.cartTxt}>{inCart ? 'Added' : 'Add to Cart'}</Text>
+              <Ionicons
+                name={inCart ? "checkmark" : "cart-outline"}
+                size={16}
+                color={Colors.WHITE}
+              />
+              <Text style={styles.cartTxt}>
+                {inCart ? "Added" : "Add to Cart"}
+              </Text>
             </>
           )}
         </TouchableOpacity>
@@ -832,8 +1049,8 @@ const SearchResults: React.FC = () => {
   };
 
   return (
-    <View>
-      <StatusBar barStyle={'dark-content'} backgroundColor={'transparent'} />
+    <View style={{ flex: 1 }}>
+      <StatusBar barStyle={"dark-content"} backgroundColor={"transparent"} />
       <SafeAreaView style={styles.safeArea}>
         {/* Header */}
         <View style={styles.header}>
@@ -879,7 +1096,9 @@ const SearchResults: React.FC = () => {
             <View style={styles.stateWrap}>
               <Ionicons name="search" size={36} color="#6B7280" />
               <Text style={styles.noResults}>No products found</Text>
-              <Text style={styles.noResultsSub}>Try refining filters or keywords</Text>
+              <Text style={styles.noResultsSub}>
+                Try refining filters or keywords
+              </Text>
             </View>
           )}
         </View>
@@ -895,80 +1114,84 @@ const SearchResults: React.FC = () => {
         <FilterModal />
       </SafeAreaView>
     </View>
-
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#FAFAFB' },
+  safeArea: { flex: 1, backgroundColor: "#FAFAFB" },
 
   header: {
     paddingHorizontal: side,
     paddingTop: 14,
     paddingBottom: 6,
     backgroundColor: Colors.PRIMARY,
-    flexDirection: 'row',
-    justifyContent: 'space-between'
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
-  headerTitle: { color: Colors.WHITE, fontSize: 18, fontWeight: '800' },
-  headerSub: { color: '#F3F4F6', fontSize: 12, marginTop: 2 },
+  headerTitle: { color: Colors.WHITE, fontSize: 18, fontWeight: "800" },
+  headerSub: { color: "#F3F4F6", fontSize: 12, marginTop: 2 },
 
   container: { flex: 1 },
 
   metaBar: {
     paddingHorizontal: 0,
     marginBottom: 10,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
-  metaText: { color: '#111827', fontSize: 13, fontWeight: '600' },
-  metaActions: { flexDirection: 'row', alignItems: 'center' },
+  metaText: { color: "#111827", fontSize: 13, fontWeight: "600" },
+  metaActions: { flexDirection: "row", alignItems: "center" },
 
   pill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#EEF2FF',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#EEF2FF",
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 14,
     marginLeft: 8,
   },
-  pillGhost: { backgroundColor: '#F1F5F9' },
-  pillText: { color: Colors.PRIMARY, fontSize: 12, fontWeight: '700', marginLeft: 6 },
+  pillGhost: { backgroundColor: "#F1F5F9" },
+  pillText: {
+    color: Colors.PRIMARY,
+    fontSize: 12,
+    fontWeight: "700",
+    marginLeft: 6,
+  },
 
   listContent: { paddingHorizontal: side, paddingBottom: 24 },
-  row: { justifyContent: 'space-between', marginBottom: gap },
+  row: { justifyContent: "space-between", marginBottom: gap },
 
   card: {
     width: itemWidth,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#EEF2F6',
-    shadowColor: '#000',
+    borderColor: "#EEF2F6",
+    shadowColor: "#000",
     shadowOpacity: 0.08,
     shadowOffset: { width: 0, height: 3 },
     shadowRadius: 6,
     elevation: 3,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
 
-  imageWrap: { position: 'relative' },
-  productImage: { width: '100%', height: 130, backgroundColor: '#fff' },
+  imageWrap: { position: "relative" },
+  productImage: { width: "100%", height: 130, backgroundColor: "#fff" },
 
   wishlistBtn: {
-    position: 'absolute',
+    position: "absolute",
     top: 8,
     right: 8,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 18,
     padding: 6,
     elevation: 2,
     zIndex: 2,
   },
   offBadge: {
-    position: 'absolute',
+    position: "absolute",
     top: 8,
     left: 8,
     backgroundColor: Colors.PRIMARY,
@@ -977,30 +1200,49 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     zIndex: 2,
   },
-  offText: { color: '#fff', fontSize: 10, fontWeight: '800' },
+  offText: { color: "#fff", fontSize: 10, fontWeight: "800" },
 
   info: { paddingHorizontal: 10, paddingTop: 10 },
-  title: { color: '#1F2937', fontSize: 13, fontWeight: '700', minHeight: 36 },
+  title: { color: "#1F2937", fontSize: 13, fontWeight: "700", minHeight: 36 },
 
-  ratingRow: { flexDirection: 'row', alignItems: 'center', marginTop: 6 },
-  ratingText: { marginLeft: 4, color: '#111827', fontSize: 11, fontWeight: '700' },
-  ratingCount: { marginLeft: 4, color: '#6B7280', fontSize: 11 },
+  ratingRow: { flexDirection: "row", alignItems: "center", marginTop: 6 },
+  ratingText: {
+    marginLeft: 4,
+    color: "#111827",
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  ratingCount: { marginLeft: 4, color: "#6B7280", fontSize: 11 },
 
-  priceRow: { flexDirection: 'row', alignItems: 'center', marginTop: 6 },
-  priceNow: { color: Colors.PRIMARY, fontSize: 14, fontWeight: '800', marginRight: 6 },
-  priceOld: { color: '#9CA3AF', fontSize: 12, textDecorationLine: 'line-through' },
+  priceRow: { flexDirection: "row", alignItems: "center", marginTop: 6 },
+  priceNow: {
+    color: Colors.PRIMARY,
+    fontSize: 14,
+    fontWeight: "800",
+    marginRight: 6,
+  },
+  priceOld: {
+    color: "#9CA3AF",
+    fontSize: 12,
+    textDecorationLine: "line-through",
+  },
 
-  tagsRow: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 8, marginBottom: 8 },
+  tagsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginTop: 8,
+    marginBottom: 8,
+  },
   tag: {
-    backgroundColor: '#F3F4F6',
-    color: '#4B5563',
+    backgroundColor: "#F3F4F6",
+    color: "#4B5563",
     fontSize: 10,
     paddingHorizontal: 6,
     paddingVertical: 3,
     borderRadius: 6,
     marginRight: 6,
     marginBottom: 6,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 
   cartBtn: {
@@ -1010,97 +1252,140 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.PRIMARY,
     borderRadius: 8,
     minHeight: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
     columnGap: 6,
   },
-  cartBtnAdded: { backgroundColor: '#10B981' },
-  cartTxt: { color: Colors.WHITE, fontSize: 12, fontWeight: '800' },
+  cartBtnAdded: { backgroundColor: "#10B981" },
+  cartTxt: { color: Colors.WHITE, fontSize: 12, fontWeight: "800" },
 
-  loadingWrap: { alignItems: 'center', paddingTop: 36 },
-  loadingText: { marginTop: 10, color: '#6B7280' },
+  loadingWrap: { alignItems: "center", paddingTop: 36 },
+  loadingText: { marginTop: 10, color: "#6B7280" },
 
-  stateWrap: { alignItems: 'center', paddingVertical: 36, paddingHorizontal: 20 },
-  noResults: { marginTop: 8, color: '#374151', fontSize: 16, fontWeight: '800' },
-  noResultsSub: { marginTop: 4, color: '#6B7280', fontSize: 12, textAlign: 'center' },
-  errorText: { marginTop: 8, color: '#DC2626', fontSize: 14, textAlign: 'center' },
+  stateWrap: {
+    alignItems: "center",
+    paddingVertical: 36,
+    paddingHorizontal: 20,
+  },
+  noResults: {
+    marginTop: 8,
+    color: "#374151",
+    fontSize: 16,
+    fontWeight: "800",
+  },
+  noResultsSub: {
+    marginTop: 4,
+    color: "#6B7280",
+    fontSize: 12,
+    textAlign: "center",
+  },
+  errorText: {
+    marginTop: 8,
+    color: "#DC2626",
+    fontSize: 14,
+    textAlign: "center",
+  },
 
   toast: {
-    position: 'absolute',
+    position: "absolute",
     left: 20,
     right: 20,
     bottom: 20,
-    backgroundColor: '#111827',
+    backgroundColor: "#111827",
     paddingVertical: 12,
     paddingHorizontal: 14,
     borderRadius: 10,
-    alignItems: 'center',
+    alignItems: "center",
     elevation: 6,
   },
-  toastText: { color: '#fff', fontSize: 14, fontWeight: '700' },
+  toastText: { color: "#fff", fontSize: 14, fontWeight: "700" },
 
   // Modal
   modalWrap: {
     flex: 1,
-    backgroundColor: 'rgba(17,24,39,0.35)',
-    justifyContent: 'flex-end',
+    backgroundColor: "rgba(17,24,39,0.35)",
+    justifyContent: "flex-end",
   },
   modalCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderTopLeftRadius: 18,
     borderTopRightRadius: 18,
-    maxHeight: '88%',
+    maxHeight: "88%",
     paddingHorizontal: 16,
     paddingTop: 10,
   },
   modalHeader: {
     paddingVertical: 6,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
-  modalTitle: { color: '#111827', fontSize: 16, fontWeight: '800' },
+  modalTitle: { color: "#111827", fontSize: 16, fontWeight: "800" },
 
   section: { marginTop: 12 },
-  sectionTitle: { color: '#111827', fontSize: 14, fontWeight: '800', marginBottom: 8 },
+  sectionTitle: {
+    color: "#111827",
+    fontSize: 14,
+    fontWeight: "800",
+    marginBottom: 8,
+  },
 
-  chipWrap: { flexDirection: 'row', flexWrap: 'wrap' },
+  chipWrap: { flexDirection: "row", flexWrap: "wrap" },
   chip: {
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 14,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: "#F3F4F6",
     marginRight: 8,
     marginBottom: 8,
   },
-  chipActive: { backgroundColor: '#EEF2FF', borderWidth: 1, borderColor: Colors.PRIMARY },
-  chipText: { fontSize: 12, color: '#1F2937', fontWeight: '600' },
+  chipActive: {
+    backgroundColor: "#EEF2FF",
+    borderWidth: 1,
+    borderColor: Colors.PRIMARY,
+  },
+  chipText: { fontSize: 12, color: "#1F2937", fontWeight: "600" },
   chipTextActive: { color: Colors.PRIMARY },
 
-  rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
-  switchLabel: { color: '#111827', fontSize: 13, fontWeight: '600' },
+  rowBetween: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+  switchLabel: { color: "#111827", fontSize: 13, fontWeight: "600" },
 
-  ratingFilterRow: { flexDirection: 'row', marginTop: 8 },
+  ratingFilterRow: { flexDirection: "row", marginTop: 8 },
   ratingPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 10,
     paddingVertical: 6,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: "#F3F4F6",
     borderRadius: 14,
     marginRight: 8,
   },
   ratingPillActive: { backgroundColor: Colors.PRIMARY },
-  ratingPillText: { marginLeft: 6, fontSize: 12, fontWeight: '700' },
+  ratingPillText: { marginLeft: 6, fontSize: 12, fontWeight: "700" },
 
-  attrTitle: { color: '#374151', fontSize: 12, fontWeight: '700', marginBottom: 6 },
+  attrTitle: {
+    color: "#374151",
+    fontSize: 12,
+    fontWeight: "700",
+    marginBottom: 6,
+  },
 
-  modalFooter: { flexDirection: 'row', paddingVertical: 12, gap: 10 },
-  footerBtn: { flex: 1, paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
-  footerGhost: { backgroundColor: '#EEF2FF' },
+  modalFooter: { flexDirection: "row", paddingVertical: 12, gap: 10 },
+  footerBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  footerGhost: { backgroundColor: "#EEF2FF" },
   footerSolid: { backgroundColor: Colors.PRIMARY },
-  footerBtnText: { fontSize: 14, fontWeight: '800' },
+  footerBtnText: { fontSize: 14, fontWeight: "800" },
 });
 
 export default SearchResults;

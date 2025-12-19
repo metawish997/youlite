@@ -45,6 +45,7 @@ const OrderHistory: React.FC = () => {
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const go = (path: string) => router.push(path as any);
 
   useEffect(() => {
     fetchOrders();
@@ -245,7 +246,35 @@ const OrderHistory: React.FC = () => {
         <Text style={styles.headerTitle}>Order History</Text>
         <View style={{ width: 24 }} />
       </View>
+ const QuickLinks = () => (
+    <View style={styles.buttonContainer}>
+    <TouchableOpacity
+  style={styles.optionButton}
+  onPress={() => router.push('https://youlitetrack.shiprocket.co/tracking')}
+>
+  <Ionicons name="navigate-outline" size={20} color={Colors.PRIMARY} />
+  <Text style={styles.optionText}>Track Order</Text>
+</TouchableOpacity>
 
+<TouchableOpacity
+  style={styles.optionButton}
+  onPress={() => router.push('https://www.delhivery.com/tracking')}
+>
+  <Ionicons name="car-outline" size={20} color={Colors.PRIMARY} />
+  <Text style={styles.optionText}>Track Parcel</Text>
+</TouchableOpacity>
+
+
+      <TouchableOpacity
+        style={styles.optionButton}
+        onPress={() => go("/pages/AddToCart/Help")}
+      >
+        <Ionicons name="help-circle-outline" size={20} color={Colors.PRIMARY} />
+        <Text style={styles.optionText}>Help</Text>
+      </TouchableOpacity>
+
+    </View>
+  );
       {/* Search Bar */}
       <View style={styles.searchContainer}>
         <Ionicons name="search" size={18} color="#6B7280" style={{ marginRight: 8 }} />
@@ -398,6 +427,17 @@ const styles = StyleSheet.create({
   emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 },
   emptyText: { fontSize: 18, fontWeight: '600', color: '#374151', marginTop: 16, marginBottom: 8 },
   emptySubText: { fontSize: 14, color: '#6B7280', textAlign: 'center', lineHeight: 20 },
+
+      buttonContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        paddingVertical: 10,
+        backgroundColor: '#fff',
+        borderBottomWidth: 1,
+        borderBottomColor: '#e0e0e0',
+    },
+      optionButton: { alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8 },
+    optionText: { fontSize: 14, color: Colors.PRIMARY, fontWeight: '500', marginTop: 4 },
 });
 
 export default OrderHistory;

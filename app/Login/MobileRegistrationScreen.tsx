@@ -47,7 +47,8 @@ const MobileRegistrationScreen: React.FC = () => {
         return;
       }
 
-      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      const { status: existingStatus } =
+        await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
 
       if (existingStatus !== "granted") {
@@ -95,19 +96,25 @@ const MobileRegistrationScreen: React.FC = () => {
 
     const cleanMobile = mobile.replace(/[^0-9]/g, "");
     if (cleanMobile.length !== 10) {
-      return Alert.alert("Error", "Please enter a valid 10-digit mobile number");
+      return Alert.alert(
+        "Error",
+        "Please enter a valid 10-digit mobile number"
+      );
     }
 
     setIsLoading(true);
     try {
-      const response = await fetch("https://youlitestore.in/wp-json/mobile-app/v1/send-otp", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({ mobile: cleanMobile, email }), // email still sent if provided
-      });
+      const response = await fetch(
+        "https://youlitestore.in/wp-json/mobile-app/v1/send-otp",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({ mobile: cleanMobile, email }), // email still sent if provided
+        }
+      );
 
       if (!response.ok) throw new Error(`Server error: ${response.status}`);
 
@@ -130,7 +137,8 @@ const MobileRegistrationScreen: React.FC = () => {
       let msg = "Something went wrong";
       if (error.message.includes("Network request failed"))
         msg = "Network error. Please check your internet connection";
-      else if (error.message.includes("405")) msg = "Server configuration error";
+      else if (error.message.includes("405"))
+        msg = "Server configuration error";
       else if (error.message) msg = error.message;
       Alert.alert("Error", msg);
     } finally {
@@ -157,13 +165,22 @@ const MobileRegistrationScreen: React.FC = () => {
             <Text style={styles.skipButtonText}>Skip</Text>
           </TouchableOpacity>
 
-          <ScrollView contentContainerStyle={styles.scrollContainer} style={{ flex: 1 }}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContainer}
+            style={{ flex: 1 }}
+          >
             <View style={styles.header}>
               <View style={styles.iconContainer}>
-                <Ionicons name="phone-portrait-outline" size={80} color={Colors.PRIMARY} />
+                <Ionicons
+                  name="phone-portrait-outline"
+                  size={80}
+                  color={Colors.PRIMARY}
+                />
               </View>
               <Text style={styles.title}>Mobile Verification</Text>
-              <Text style={styles.subtitle}>Enter your mobile number and create account</Text>
+              <Text style={styles.subtitle}>
+                Enter your mobile number and create account
+              </Text>
             </View>
 
             <View style={styles.formContainer}>
@@ -172,7 +189,12 @@ const MobileRegistrationScreen: React.FC = () => {
                 <View style={styles.countryCode}>
                   <Text style={styles.countryCodeText}>+91</Text>
                 </View>
-                <Ionicons name="call-outline" size={20} color={Colors.PRIMARY} style={styles.inputIcon} />
+                <Ionicons
+                  name="call-outline"
+                  size={20}
+                  color={Colors.PRIMARY}
+                  style={styles.inputIcon}
+                />
                 <TextInput
                   style={styles.input}
                   placeholder="Mobile Number"
@@ -187,7 +209,12 @@ const MobileRegistrationScreen: React.FC = () => {
 
               {/* ✅ Email (Optional) */}
               <View style={styles.inputContainer}>
-                <Ionicons name="mail-outline" size={20} color={Colors.PRIMARY} style={styles.inputIcon} />
+                <Ionicons
+                  name="mail-outline"
+                  size={20}
+                  color={Colors.PRIMARY}
+                  style={styles.inputIcon}
+                />
                 <TextInput
                   style={styles.input}
                   placeholder="Email Address (Optional)"
@@ -202,8 +229,21 @@ const MobileRegistrationScreen: React.FC = () => {
 
               {/* ✅ Password (Optional) */}
               <View style={styles.inputContainer}>
-                <Ionicons name="lock-closed-outline" size={20} color={Colors.PRIMARY} style={styles.inputIcon} />
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%', paddingRight: 60, alignItems: 'center' }}>
+                <Ionicons
+                  name="lock-closed-outline"
+                  size={20}
+                  color={Colors.PRIMARY}
+                  style={styles.inputIcon}
+                />
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    width: "100%",
+                    paddingRight: 60,
+                    alignItems: "center",
+                  }}
+                >
                   <TextInput
                     style={styles.input}
                     placeholder="Password (Optional)"
@@ -217,7 +257,11 @@ const MobileRegistrationScreen: React.FC = () => {
                     style={styles.visibilityToggle}
                     onPress={() => setShowPassword(!showPassword)}
                   >
-                    <Ionicons name={showPassword ? "eye-off" : "eye"} size={20} color="#999" />
+                    <Ionicons
+                      name={showPassword ? "eye-off" : "eye"}
+                      size={20}
+                      color="#999"
+                    />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -227,7 +271,10 @@ const MobileRegistrationScreen: React.FC = () => {
               </Text>
 
               <TouchableOpacity
-                style={[styles.button, (!canSubmit || isLoading) && styles.buttonDisabled]}
+                style={[
+                  styles.button,
+                  (!canSubmit || isLoading) && styles.buttonDisabled,
+                ]}
                 onPress={handleSendOTP}
                 disabled={!canSubmit || isLoading}
               >
@@ -237,8 +284,14 @@ const MobileRegistrationScreen: React.FC = () => {
               </TouchableOpacity>
 
               <View style={styles.infoContainer}>
-                <Ionicons name="shield-checkmark" size={16} color={Colors.PRIMARY} />
-                <Text style={styles.infoText}>Your information is safe and secure</Text>
+                <Ionicons
+                  name="shield-checkmark"
+                  size={16}
+                  color={Colors.PRIMARY}
+                />
+                <Text style={styles.infoText}>
+                  Your information is safe and secure
+                </Text>
               </View>
             </View>
           </ScrollView>
@@ -249,9 +302,9 @@ const MobileRegistrationScreen: React.FC = () => {
         <Text style={{ fontSize: 12 }}>Powered By </Text>
         <Text
           style={{ color: "blue", fontSize: 12 }}
-          onPress={() => router.push("https://www.metawish.ai/")}
+          onPress={() => router.push("https://discoverwebsoft.com/")}
         >
-          Metawish.AI
+          Discover Websoft
         </Text>
       </View>
     </View>
@@ -260,7 +313,13 @@ const MobileRegistrationScreen: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: { backgroundColor: Colors.WHITE, flex: 1, paddingTop: 40 },
-  skipButton: { position: "absolute", top: 80, right: 30, zIndex: 10, padding: 10 },
+  skipButton: {
+    position: "absolute",
+    top: 80,
+    right: 30,
+    zIndex: 10,
+    padding: 10,
+  },
   skipButtonText: { color: Colors.PRIMARY, fontSize: 16, fontWeight: "600" },
   scrollContainer: {
     padding: 20,
@@ -277,8 +336,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 20,
   },
-  title: { fontSize: 28, fontWeight: "bold", color: Colors.PRIMARY, marginBottom: 10 },
-  subtitle: { fontSize: 16, color: "#666", textAlign: "center", paddingHorizontal: 20 },
+  title: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: Colors.PRIMARY,
+    marginBottom: 10,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: "#666",
+    textAlign: "center",
+    paddingHorizontal: 20,
+  },
   formContainer: { width: "100%" },
   inputContainer: {
     flexDirection: "row",
@@ -301,7 +370,12 @@ const styles = StyleSheet.create({
   inputIcon: { marginRight: 10 },
   input: { height: "100%", color: Colors.BLACK, fontSize: 16, width: "100%" },
   visibilityToggle: { padding: 5 },
-  helperText: { fontSize: 13, color: "#999", marginBottom: 20, textAlign: "center" },
+  helperText: {
+    fontSize: 13,
+    color: "#999",
+    marginBottom: 20,
+    textAlign: "center",
+  },
   button: {
     backgroundColor: Colors.PRIMARY,
     borderRadius: 10,
