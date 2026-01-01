@@ -10,24 +10,21 @@
       "node": "18.18.0",
       "env": {
         "EAS_NPM_DISABLE_CI": "1"
-      },
-      "installCommand": "npm install --legacy-peer-deps"
+      }
     },
     "preview": {
       "distribution": "internal",
       "node": "18.18.0",
       "env": {
         "EAS_NPM_DISABLE_CI": "1"
-      },
-      "installCommand": "npm install --legacy-peer-deps"
+      }
     },
     "production": {
       "autoIncrement": true,
       "node": "18.18.0",
       "env": {
         "EAS_NPM_DISABLE_CI": "1"
-      },
-      "installCommand": "npm install --legacy-peer-deps"
+      }
     }
   },
   "submit": {
