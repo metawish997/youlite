@@ -36,7 +36,7 @@
       ]
     },
     "splash": {
-      "backgroundColor": "#ffffff",
+      "backgroundColor": "#fb6100",
       "resizeMode": "contain",
       "image": "./assets/images/icon.png"
     },
