@@ -11,9 +11,7 @@
       "env": {
         "EAS_NPM_DISABLE_CI": "1"
       },
-      "npm": {
-        "command": "install --legacy-peer-deps"
-      }
+      "installCommand": "npm install --legacy-peer-deps"
     },
     "preview": {
       "distribution": "internal",
@@ -21,9 +19,7 @@
       "env": {
         "EAS_NPM_DISABLE_CI": "1"
       },
-      "npm": {
-        "command": "install --legacy-peer-deps"
-      }
+      "installCommand": "npm install --legacy-peer-deps"
     },
     "production": {
       "autoIncrement": true,
@@ -31,9 +27,7 @@
       "env": {
         "EAS_NPM_DISABLE_CI": "1"
       },
-      "npm": {
-        "command": "install --legacy-peer-deps"
-      }
+      "installCommand": "npm install --legacy-peer-deps"
     }
   },
   "submit": {
