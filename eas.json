@@ -6,13 +6,34 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "node": "18.18.0",
+      "env": {
+        "EAS_NPM_DISABLE_CI": "1"
+      },
+      "npm": {
+        "command": "install --legacy-peer-deps"
+      }
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "node": "18.18.0",
+      "env": {
+        "EAS_NPM_DISABLE_CI": "1"
+      },
+      "npm": {
+        "command": "install --legacy-peer-deps"
+      }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "node": "18.18.0",
+      "env": {
+        "EAS_NPM_DISABLE_CI": "1"
+      },
+      "npm": {
+        "command": "install --legacy-peer-deps"
+      }
     }
   },
   "submit": {
