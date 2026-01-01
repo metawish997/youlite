@@ -3,6 +3,7 @@ import Colors from "@/utils/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage"; // Added Import
 import {
   Alert,
   Animated,
@@ -23,7 +24,7 @@ const VerifyOTPScreen = () => {
 
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [isLoading, setIsLoading] = useState(false);
-  const [timer, setTimer] = useState(30); // Changed to 30 seconds
+  const [timer, setTimer] = useState(30);
   const [canResend, setCanResend] = useState(false);
   const [showSuccessScreen, setShowSuccessScreen] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
@@ -114,6 +115,40 @@ const VerifyOTPScreen = () => {
           token: jwtToken,
         });
 
+        // ============================================================
+        // UPDATE FCM TOKEN WITH USER ID
+        // ============================================================
+        try {
+          // Retrieve the device token stored in AsyncStorage
+          // Ensure you are saving this token as "push_token" when the app starts
+          const deviceToken = await AsyncStorage.getItem("push_token");
+
+          if (deviceToken) {
+            await fetch(
+              "https://youlitestore.in/wp-json/mobile-app/v1/store-device-token",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${jwtToken}`, // Pass JWT for verification
+                },
+                body: JSON.stringify({
+                  user_id: userId,
+                  device_token: deviceToken,
+                  device_type: Platform.OS, // 'android' or 'ios'
+                }),
+              }
+            );
+            console.log("FCM Token linked to User ID successfully");
+          } else {
+            console.log("No device token found in storage to update.");
+          }
+        } catch (fcmError) {
+          // Log error but do not block the login flow
+          console.error("Failed to update FCM token:", fcmError);
+        }
+        // ============================================================
+
         // Set success message and show success screen
         setSuccessMessage(
           data.is_new_user
@@ -133,27 +168,22 @@ const VerifyOTPScreen = () => {
           useNativeDriver: true,
         }).start();
 
-        // Hide success screen and navigate after 1 second
+        // Hide success screen and navigate after 2 seconds
         setTimeout(() => {
           setShowSuccessScreen(false);
           router.replace("/(tabs)");
         }, 2000);
-
       } else {
-        Alert.alert(
-          "Error",
-          data.message || "Invalid OTP. Please try again.",
-          [
-            {
-              text: "OK",
-              onPress: () => {
-                // Clear OTP inputs
-                setOtp(["", "", "", "", "", ""]);
-                inputRefs.current[0]?.focus();
-              },
+        Alert.alert("Error", data.message || "Invalid OTP. Please try again.", [
+          {
+            text: "OK",
+            onPress: () => {
+              // Clear OTP inputs
+              setOtp(["", "", "", "", "", ""]);
+              inputRefs.current[0]?.focus();
             },
-          ]
-        );
+          },
+        ]);
       }
     } catch (error: any) {
       console.error("Verify OTP Error:", error);
@@ -243,10 +273,7 @@ const VerifyOTPScreen = () => {
                 ref={(ref) => {
                   inputRefs.current[index] = ref;
                 }}
-                style={[
-                  styles.otpInput,
-                  digit && styles.otpInputFilled,
-                ]}
+                style={[styles.otpInput, digit && styles.otpInputFilled]}
                 value={digit}
                 onChangeText={(value) => handleOtpChange(value, index)}
                 onKeyPress={(e) => handleKeyPress(e, index)}
@@ -277,10 +304,7 @@ const VerifyOTPScreen = () => {
                 Resend OTP in {formatTime(timer)}
               </Text>
             ) : (
-              <TouchableOpacity
-                onPress={handleResendOTP}
-                disabled={isLoading}
-              >
+              <TouchableOpacity onPress={handleResendOTP} disabled={isLoading}>
                 <Text style={styles.resendText}>Resend OTP</Text>
               </TouchableOpacity>
             )}
@@ -314,8 +338,8 @@ const VerifyOTPScreen = () => {
                   style={[
                     styles.checkmarkCircle,
                     {
-                      transform: [{ scale: scaleAnim }]
-                    }
+                      transform: [{ scale: scaleAnim }],
+                    },
                   ]}
                 >
                   <Ionicons name="checkmark" size={60} color={Colors.WHITE} />
@@ -324,9 +348,7 @@ const VerifyOTPScreen = () => {
 
               {/* Success Text */}
               <Text style={styles.successTitle}>Success!</Text>
-              <Text style={styles.successSubtitle}>
-                {successMessage}
-              </Text>
+              <Text style={styles.successSubtitle}>{successMessage}</Text>
 
               {/* Loading Dots */}
               <View style={styles.loadingDots}>
@@ -457,20 +479,20 @@ const styles = StyleSheet.create({
   },
   successContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.8)",
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   successContent: {
     backgroundColor: Colors.WHITE,
     borderRadius: 20,
     padding: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
+    alignItems: "center",
+    justifyContent: "center",
+    width: "100%",
     maxWidth: 300,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 10,
@@ -487,8 +509,8 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: 50,
     backgroundColor: Colors.PRIMARY,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     shadowColor: Colors.PRIMARY,
     shadowOffset: {
       width: 0,
@@ -500,22 +522,22 @@ const styles = StyleSheet.create({
   },
   successTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: Colors.PRIMARY,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 10,
   },
   successSubtitle: {
     fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
+    color: "#666",
+    textAlign: "center",
     marginBottom: 30,
     lineHeight: 22,
   },
   loadingDots: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
   },
   dot: {
     width: 10,

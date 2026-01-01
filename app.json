@@ -2,7 +2,7 @@
   "expo": {
     "name": "YouLite",
     "slug": "YouLite",
-    "version": "1.0.1",
+    "version": "1.0.4",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "youlite",
@@ -10,8 +10,16 @@
     "sdkVersion": "54.0.0",
     "newArchEnabled": true,
     "ios": {
+      "bundleIdentifier": "org.name.YouLite",
+
       "supportsTablet": true,
-      "bundleIdentifier": "com.youlite.store"
+      "infoPlist": {
+        "UIBackgroundModes": ["remote-notification"],
+        "NSPhotoLibraryUsageDescription": "YouLite needs access to your photo library to allow you to upload images when required.",
+        "NSCameraUsageDescription": "YouLite needs camera access to capture images when required.",
+        "NSMicrophoneUsageDescription": "YouLite may use microphone access for media features when required.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -20,15 +28,17 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.youlite.store",
-      "versionCode": 5.2,
-      "googleServicesFile": "./google-services.json",
+      "versionCode": 9,
+      "googleServicesFile": "./android/app/google-services.json",
       "permissions": [
         "android.permission.INTERNET",
         "android.permission.POST_NOTIFICATIONS"
       ]
     },
     "splash": {
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#ffffff",
+      "resizeMode": "contain",
+      "image": "./assets/images/icon.png"
     },
     "web": {
       "bundler": "metro",
@@ -39,7 +49,13 @@
       "expo-router",
       "expo-secure-store",
       "expo-video",
-      "expo-notifications",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#ffffff"
+        }
+      ],
       "react-native-video",
       "expo-asset",
       [
@@ -59,7 +75,9 @@
     },
     "extra": {
       "router": {},
-      "eas": {}
+      "eas": {
+        "projectId": "1dedf285-2757-4c1a-a21a-cf3b9a2d178c"
+      }
     }
   }
 }

@@ -1,8 +1,9 @@
-// src/screens/MobileRegistrationScreen.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+
+import { usePushToken } from "../../hooks/usePushToken";
+
 import {
   Alert,
-  Dimensions,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -13,20 +14,20 @@ import {
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Link, router } from "expo-router";
+import { router } from "expo-router";
 import Colors from "@/utils/Colors";
-import * as Device from "expo-device";
-import * as Notifications from "expo-notifications";
-import { app } from "../../utils/firebaseConfig"; // ✅ only Firebase core
+// import * as Device from "expo-device";
+// import * as Notifications from "expo-notifications";
+// import { app } from "../../utils/firebaseConfig";
 
 // ✅ Configure notification handling
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
+// Notifications.setNotificationHandler({
+//   handleNotification: async () => ({
+//     shouldShowAlert: true,
+//     shouldPlaySound: true,
+//     shouldSetBadge: false,
+//   }),
+// });
 
 const MobileRegistrationScreen: React.FC = () => {
   const [mobile, setMobile] = useState("");
@@ -34,65 +35,94 @@ const MobileRegistrationScreen: React.FC = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const deviceToken = usePushToken();
 
-  useEffect(() => {
-    registerForPushNotificationsAsync();
-  }, []);
+  // const [deviceToken, setDeviceToken] = useState<string | null>(null);
 
-  // ✅ Native push registration (works for Android/iOS)
-  const registerForPushNotificationsAsync = async () => {
-    try {
-      if (!Device.isDevice) {
-        console.log("Push notifications: must use a physical device");
-        return;
-      }
+  // useEffect(() => {
+  //   registerForPushNotificationsAsync();
+  // }, []);
 
-      const { status: existingStatus } =
-        await Notifications.getPermissionsAsync();
-      let finalStatus = existingStatus;
+  // 1. ✅ Save Token to WordPress (Raw FCM Token)
+  // const saveTokenToBackend = async (token: string) => {
+  //   try {
+  //     console.log("Saving FCM Token to Backend:", token);
 
-      if (existingStatus !== "granted") {
-        const { status } = await Notifications.requestPermissionsAsync();
-        finalStatus = status;
-      }
+  //     const response = await fetch(
+  //       "https://youlitestore.in/wp-json/mobile-app/v1/store-device-token",
+  //       {
+  //         method: "POST",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //           Accept: "application/json",
+  //         },
+  //         body: JSON.stringify({
+  //           device_token: token,
+  //           device_type: Platform.OS === "ios" ? "ios" : "android",
+  //           user_id: 0, // Guest/Registration mode
+  //         }),
+  //       }
+  //     );
 
-      if (finalStatus !== "granted") {
-        console.log("Notification permission not granted!");
-        return;
-      }
+  //     const data = await response.json();
+  //     console.log("Backend Response:", data);
+  //   } catch (error) {
+  //     console.log("Failed to save token to backend:", error);
+  //   }
+  // };
 
-      const pushTokenData = await Notifications.getDevicePushTokenAsync();
-      console.log("Device Push Token (FCM/APNs):", pushTokenData.data);
+  // 2. ✅ Get RAW Device Token (FCM)
+  // const registerForPushNotificationsAsync = async () => {
+  //   try {
+  //     if (!Device.isDevice) {
+  //       console.log("Push notifications: must use a physical device");
+  //       return;
+  //     }
 
-      const expoToken = (
-        await Notifications.getExpoPushTokenAsync({
-          projectId: "80955700657",
-        })
-      ).data;
-      console.log("Expo Push Token:", expoToken);
-    } catch (error) {
-      console.log("Error registering for push notifications:", error);
-    }
-  };
+  //     // Permissions
+  //     const { status: existingStatus } =
+  //       await Notifications.getPermissionsAsync();
+  //     let finalStatus = existingStatus;
+
+  //     if (existingStatus !== "granted") {
+  //       const { status } = await Notifications.requestPermissionsAsync();
+  //       finalStatus = status;
+  //     }
+
+  //     if (finalStatus !== "granted") {
+  //       Alert.alert("Permission Required", "Please enable notifications.");
+  //       return;
+  //     }
+
+  //     // Android Channel
+  //     if (Platform.OS === "android") {
+  //       await Notifications.setNotificationChannelAsync("default", {
+  //         name: "default",
+  //         importance: Notifications.AndroidImportance.MAX,
+  //         vibrationPattern: [0, 250, 250, 250],
+  //         lightColor: "#FF231F7C",
+  //       });
+  //     }
+
+  //     const tokenResponse = await Notifications.getDevicePushTokenAsync();
+  //     const rawToken = tokenResponse.data;
+
+  //     console.log("👉 RAW DEVICE TOKEN (FCM):", rawToken);
+  //     setDeviceToken(rawToken);
+
+  //     // Save immediately
+  //     if (rawToken) {
+  //       await saveTokenToBackend(rawToken);
+  //     }
+  //   } catch (error) {
+  //     console.log("Error getting device token:", error);
+  //   }
+  // };
 
   const handleSkip = () => router.replace("/(tabs)");
 
   const handleSendOTP = async () => {
     if (!mobile) return Alert.alert("Error", "Please enter your mobile number");
-
-    // ❌ Email no longer mandatory
-    // if (!email) return Alert.alert("Error", "Please enter your email address");
-
-    // ❌ Commenting out email format check since it's optional
-    // const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    // if (email && !emailRegex.test(email)) {
-    //   return Alert.alert("Error", "Please enter a valid email address");
-    // }
-
-    // ❌ Password not required now
-    // if (password.length < 6) {
-    //   return Alert.alert("Error", "Password must be at least 6 characters long");
-    // }
 
     const cleanMobile = mobile.replace(/[^0-9]/g, "");
     if (cleanMobile.length !== 10) {
@@ -112,7 +142,11 @@ const MobileRegistrationScreen: React.FC = () => {
             "Content-Type": "application/json",
             Accept: "application/json",
           },
-          body: JSON.stringify({ mobile: cleanMobile, email }), // email still sent if provided
+          body: JSON.stringify({
+            mobile: cleanMobile,
+            email,
+            device_token: deviceToken ?? null,
+          }),
         }
       );
 
@@ -128,7 +162,11 @@ const MobileRegistrationScreen: React.FC = () => {
       if (data.success) {
         router.push({
           pathname: "/Login/VerifyOTPScreen",
-          params: { mobile: cleanMobile, email, password },
+          params: {
+            mobile: cleanMobile,
+            email,
+            password,
+          },
         });
       } else {
         Alert.alert("Error", data.message || "Failed to send OTP");
@@ -151,14 +189,13 @@ const MobileRegistrationScreen: React.FC = () => {
     setMobile(cleaned.slice(0, 10));
   };
 
-  // ✅ Adjusted to only require mobile number
-  const canSubmit = mobile.length === 10; // && email && password.length >= 6;
+  const canSubmit = mobile.length === 10;
 
   return (
     <View style={styles.container}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{ flex: 1 }} // ✅ ensure full height
+        style={{ flex: 1 }}
       >
         <View style={{ flex: 1 }}>
           <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
@@ -184,7 +221,7 @@ const MobileRegistrationScreen: React.FC = () => {
             </View>
 
             <View style={styles.formContainer}>
-              {/* ✅ Mobile Field */}
+              {/* Mobile Field */}
               <View style={styles.inputContainer}>
                 <View style={styles.countryCode}>
                   <Text style={styles.countryCodeText}>+91</Text>
@@ -207,7 +244,7 @@ const MobileRegistrationScreen: React.FC = () => {
                 />
               </View>
 
-              {/* ✅ Email (Optional) */}
+              {/* Email (Optional) */}
               <View style={styles.inputContainer}>
                 <Ionicons
                   name="mail-outline"
@@ -227,7 +264,7 @@ const MobileRegistrationScreen: React.FC = () => {
                 />
               </View>
 
-              {/* ✅ Password (Optional) */}
+              {/* Password (Optional) */}
               <View style={styles.inputContainer}>
                 <Ionicons
                   name="lock-closed-outline"

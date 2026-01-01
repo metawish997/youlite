@@ -1,37 +1,44 @@
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  ActivityIndicator,
+  Dimensions,
+  FlatList,
+  Image,
+  Linking,
+  Modal,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { router, useLocalSearchParams } from "expo-router";
+import { Picker } from "@react-native-picker/picker";
+import { Video, ResizeMode } from "expo-av";
+import YoutubeIframe from "react-native-youtube-iframe";
+import { Ionicons } from "@expo/vector-icons";
+import { WebView } from "react-native-webview";
+
+// API & Services
 import { getProductDetail, getProducts } from "@/lib/api/productApi";
 import {
   getCustomerById,
   getSession,
   updateCustomerById,
 } from "@/lib/services/authService";
-import Colors from "@/utils/Colors";
-import { Picker } from "@react-native-picker/picker";
-import { router, useLocalSearchParams } from "expo-router";
-import React, { useEffect, useMemo, useState } from "react";
-import { Modal, TouchableWithoutFeedback } from "react-native";
-import { Video, ResizeMode } from "expo-av";
-import YoutubeIframe from "react-native-youtube-iframe";
-const { width } = Dimensions.get("window");
-import styles from "./itemDetailsStyle";
-import {
-  ActivityIndicator,
-  Dimensions,
-  FlatList,
-  Image,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-} from "react-native";
-
-// Import rating services
 import { loadReviews } from "@/lib/services/ratingServices";
+
+// Utils & Styles
+import Colors from "@/utils/Colors";
 import Loading from "@/app/components/Loading";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Linking, View } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { WebView } from "react-native-webview";
+import styles from "./itemDetailsStyle";
+
+// Get dimensions after importing Dimensions
+const { width } = Dimensions.get("window");
 
 const toNum = (v: any, fb = 0): number => {
   const n = parseFloat(String(v ?? ""));
@@ -546,6 +553,7 @@ const getProductReviews = async (productId: string) => {
 
 const ItemDetails = () => {
   const params = useLocalSearchParams<{ id?: string }>();
+  const [showIosPicker, setShowIosPicker] = useState<boolean>(false);
   const productId = useMemo(
     () => (params?.id ? String(params.id) : ""),
     [params?.id]
@@ -1471,6 +1479,7 @@ const ItemDetails = () => {
           </View>
 
           {/* Variant Selection */}
+          {/* Variant Selection */}
           {product.isVariable && product.options.length > 0 && (
             <View style={styles.colorSection}>
               <Text style={styles.sectionTitle}>
@@ -1483,30 +1492,92 @@ const ItemDetails = () => {
                     </Text>
                   )}
               </Text>
+
               <View style={styles.pickerWrapper}>
-                <Picker
-                  selectedValue={selectedOption}
-                  onValueChange={handleOptionChange}
-                  dropdownIconColor="#000"
-                  style={styles.picker}
-                >
-                  {product.options.map((option) => {
-                    const variation = product.variationMap?.[option];
-                    const isOutOfStock = variation && !variation.inStock;
-                    return (
-                      <Picker.Item
-                        key={option}
-                        label={
-                          isOutOfStock ? `${option} (Out of Stock)` : option
-                        }
-                        value={option}
-                        color={isOutOfStock ? "#999" : "#000"}
-                        enabled={!isOutOfStock}
-                        style={{ backgroundColor: "white" }}
-                      />
-                    );
-                  })}
-                </Picker>
+                {Platform.OS === "ios" ? (
+                  // ---------------- iOS VIEW (Clickable Button + Modal) ----------------
+                  <>
+                    <TouchableOpacity
+                      onPress={() => setShowIosPicker(true)}
+                      style={styles.iosPickerButton}
+                    >
+                      <Text style={{ color: "#000", fontSize: 16 }}>
+                        {selectedOption}
+                      </Text>
+                      <Ionicons name="chevron-down" size={20} color="#666" />
+                    </TouchableOpacity>
+
+                    <Modal
+                      visible={showIosPicker}
+                      transparent={true}
+                      animationType="slide"
+                    >
+                      <View style={styles.iosModalOverlay}>
+                        <View style={styles.iosModalContent}>
+                          {/* Header with Done button */}
+                          <View style={styles.iosModalHeader}>
+                            <TouchableOpacity
+                              onPress={() => setShowIosPicker(false)}
+                            >
+                              <Text style={styles.iosModalDone}>Done</Text>
+                            </TouchableOpacity>
+                          </View>
+
+                          <Picker
+                            selectedValue={selectedOption}
+                            onValueChange={(itemValue) =>
+                              handleOptionChange(itemValue)
+                            }
+                            style={{ height: 215, width: "100%" }} // Fixed height for iOS Wheel
+                          >
+                            {product.options.map((option) => {
+                              const variation = product.variationMap?.[option];
+                              const isOutOfStock =
+                                variation && !variation.inStock;
+                              return (
+                                <Picker.Item
+                                  key={option}
+                                  label={
+                                    isOutOfStock
+                                      ? `${option} (Out of Stock)`
+                                      : option
+                                  }
+                                  value={option}
+                                  color={isOutOfStock ? "#999" : "#000"}
+                                />
+                              );
+                            })}
+                          </Picker>
+                        </View>
+                      </View>
+                    </Modal>
+                  </>
+                ) : (
+                  // ---------------- ANDROID VIEW (Standard Dropdown) ----------------
+                  <Picker
+                    selectedValue={selectedOption}
+                    onValueChange={handleOptionChange}
+                    dropdownIconColor="#000"
+                    style={styles.picker}
+                  >
+                    {product.options.map((option) => {
+                      const variation = product.variationMap?.[option];
+                      const isOutOfStock = variation && !variation.inStock;
+                      return (
+                        <Picker.Item
+                          key={option}
+                          label={
+                            isOutOfStock ? `${option} (Out of Stock)` : option
+                          }
+                          value={option}
+                          color={isOutOfStock ? "#999" : "#000"}
+                          enabled={!isOutOfStock}
+                          style={{ backgroundColor: "white" }}
+                        />
+                      );
+                    })}
+                  </Picker>
+                )}
               </View>
             </View>
           )}
