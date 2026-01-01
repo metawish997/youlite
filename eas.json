@@ -4,27 +4,18 @@
     "appVersionSource": "remote"
   },
   "build": {
+    "production": {
+      "node": "20.11.1",
+      "autoIncrement": true
+    },
     "development": {
+      "node": "20.11.1",
       "developmentClient": true,
-      "distribution": "internal",
-      "node": "18.18.0",
-      "env": {
-        "EAS_NPM_DISABLE_CI": "1"
-      }
+      "distribution": "internal"
     },
     "preview": {
-      "distribution": "internal",
-      "node": "18.18.0",
-      "env": {
-        "EAS_NPM_DISABLE_CI": "1"
-      }
-    },
-    "production": {
-      "autoIncrement": true,
-      "node": "18.18.0",
-      "env": {
-        "EAS_NPM_DISABLE_CI": "1"
-      }
+      "node": "20.11.1",
+      "distribution": "internal"
     }
   },
   "submit": {
